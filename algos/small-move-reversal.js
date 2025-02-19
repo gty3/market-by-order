@@ -1,10 +1,10 @@
 /**
  * Small Move Reversal
  * 
- * This strategy is a simple reversal strategy that looks for a small price move
- * and then reverses the position.
+ * This strategy takes advantage of short reversals in price direction.
  * 
- * This strategy is effective in medium to high volume. 
+ * This strategy is effective in medium to high volume.
+ * This strategy is to be avoided in low volume or high volatility, it can get easily run over.
  * 
  */
 

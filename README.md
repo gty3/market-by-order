@@ -4,8 +4,9 @@ This repository contains tools and types for developing trading strategies that 
 Your trading strategy will have access to the following global objects:
 
 - `state`: Contains current market data and order state
+- `placeLimitOrder` and `placeMarketOrder`: Trading functions
 - `store`: Persistent storage for variables across message runs
-- Trading functions: `placeLimitOrder` and `placeMarketOrder`
+
 
 ## State Object
 
@@ -151,10 +152,10 @@ if (!state.userTrade) {
 
 The `state.mbp10.attributes` object provides advanced market metrics:
 
-- `bid_density/ask_density`: Measure of order book density
-- `buy_density/sell_density`: Measure of trading activity
-- `bid_pull_rate/ask_pull_rate`: Rate of order cancellations
-- `bid_stack_rate/ask_stack_rate`: Rate of new orders
+- `bid_density/ask_density`: Average amount of contracts traded per limit order
+- `buy_density/sell_density`: Average amount of contracts traded per market order
+- `bid_pull_rate/ask_pull_rate`: Average number of order cancellations within 1ms of a trade on the same side
+- `bid_stack_rate/ask_stack_rate`: Average number of orders added within 1ms of a trade on the same side
 
 Use these metrics to create more sophisticated trading strategies based on order book dynamics.
 
@@ -162,4 +163,4 @@ Use these metrics to create more sophisticated trading strategies based on order
 ## Platform Limitations
 **Only 1 trade can be opened at a time - you cannot place a bid limit while long**
 
-**Limit orders are filled when an opposing bid or ask becomes available at that price**
+**Limit orders are filled when an opposing bid or ask becomes available at that price - eg your limit orders are only filled by opposing limit orders**
