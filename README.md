@@ -10,42 +10,75 @@ Your trading strategy will have access to the following global objects:
 - `store`: Persistent storage for variables across message runs
 - Trading functions: `placeLimitOrder` and `placeMarketOrder`
 
-### State Object
+### State Object Instrument and Orders
 
-The `state` object provides real-time market information and current order status:
+The `state` object provides instrument and trade information as well as market data.
 
 ```typescript
-state.mbp10: {
-    // Market by price data with 10 levels
-    levels: Array<{
-        bid_px: number    // Bid price at level
-        ask_px: number    // Ask price at level
-        bid_sz: number    // Bid size
-        ask_sz: number    // Ask size
-        bid_ct: number    // Bid count
-        ask_ct: number    // Ask count
-    }>
-    attributes: {
-        bid_density: number    // Current bid density
-        ask_density: number    // Current ask density
-        bid_pull_rate: number  // Rate of bid cancellations
-        ask_pull_rate: number  // Rate of ask cancellations
-        // ... other market metrics
+    state.instrument: {
+      symbol: string
+      commission: number
+      minPrice: number
+      increment: number
     }
-}
+    bidLimitOrder: {
+      price: number
+      stoploss?: number
+    } | null
+    offerLimitOrder: {
+      price: number
+      stoploss?: number
+    } | null
+    userTrade: {
+      price: number
+      side: "Ask" | "Bid"
+      stoploss?: number
+    } | null
+```
+### State Object Market Data
+Market Data is in MBP10 format from Databento.
+Additionally it includes an attributes parameter containing custom indicators.
+Learn more about MBP10 at https://databento.com/docs/schemas-and-data-formats/mbp-10
+```
+    state.mbp10: {
+      hd: {                     // Databento Header
+        length: number
+        rtype: number
+        publisher_id: number
+        instrument_id: number
+        ts_event: number        // Event time
+      }
+      price: number 
+      size: number
+      action: "Add" | "Cancel" | "Modify" | "Trade" | "Fill"
+      side: "Ask" | "Bid" | "None"
+      flags: number
+      depth: number
+      ts_recv: number
+      ts_in_delta: number
+      sequence: number
+      levels: Array<{
+        bid_px: number          // Bid price
+        ask_px: number          // Ask price
+        bid_sz: number          // Bid size
+        ask_sz: number          // Ask size
+        bid_ct: number          // Bid count
+        ask_ct: number          // Ask count
+      }>    
+      attributes: {             // Custom Indicators
+        bid_density: number
+        ask_density: number
+        buy_density: number
+        sell_density: number
+        bid_pull_rate: number
+        ask_pull_rate: number
+        bid_stack_rate: number
+        ask_stack_rate: number
+      }
+    }
 
-state.userTrade: {
-    price: number
-    side: "Ask" | "Bid"
-    stoploss?: number
-} | null
 
-state.instrument: {
-    symbol: string
-    commission: number
-    minPrice: number
-    increment: number
-}
+
 ```
 
 ### Trading Functions
@@ -134,19 +167,6 @@ if (!state.userTrade) {
        stoploss: 4  // Exit if price moves 4 ticks against you
    })
    ```
-
-3. **Validate Market Data**
-   ```typescript
-   if (state.mbp10.levels.length > 0 && state.mbp10.levels[0].bid_px > 0) {
-       // Safe to use price data
-   }
-   ```
-
-4. **Optimize Performance**
-   - Minimize complex calculations
-   - Avoid creating large objects/arrays
-   - Use simple conditional logic
-   - Cache frequently used values
 
 ## Market Attributes
 

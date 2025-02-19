@@ -1,9 +1,12 @@
-// This code runs on every message, this can be as often as 2000 times
-// per second. Run with caution.
-
-// The orderbook is available as mbp10.levels
-// levels[0].ask_px will be best ask price, level[0].bid_px, will be best bid price
-
+/**
+ * Persistent Spread
+ * 
+ * This algo maintains a persistent spread between the bid and ask prices.
+ * Best used for markets trading in a tight range.
+ * Due to the persistent nature of the spread, it is able to make a lot of trades.
+ * And subsequently, lose a lot of money. Run for only short periods of time or 
+ * when specific conditions are met.
+ */
 
 // If not currently in a trade
 if (!state.userTrade) {
