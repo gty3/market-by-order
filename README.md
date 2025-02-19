@@ -1,16 +1,13 @@
 # Market By Order Trading Strategy Development
 
 This repository contains tools and types for developing trading strategies that run within the DOM trading interface. The code here executes on every market data message, allowing you to create responsive trading algorithms.
-
-## Getting Started
-
 Your trading strategy will have access to the following global objects:
 
 - `state`: Contains current market data and order state
 - `store`: Persistent storage for variables across message runs
 - Trading functions: `placeLimitOrder` and `placeMarketOrder`
 
-### State Object
+## State Object
 
 The `state` object provides instrument and trade information as well as market data.
 See `instruments.ts` for available attributes.
@@ -39,7 +36,7 @@ See `instruments.ts` for available attributes.
 Market Data is in MBP10 format from Databento.
 Additionally it includes an attributes parameter containing custom indicators.
 Learn more about MBP10 at https://databento.com/docs/schemas-and-data-formats/mbp-10
-```
+```typescript
     state.mbp10: {
       hd: {                     // Databento Header
         length: number
@@ -81,7 +78,7 @@ Learn more about MBP10 at https://databento.com/docs/schemas-and-data-formats/mb
 
 ```
 
-### Trading Functions
+## Trading Functions
 
 Place orders using these functions:
 
@@ -89,8 +86,8 @@ Place orders using these functions:
 // Place a limit order
 placeLimitOrder({
     type: "Bid" | "Ask",
-    price: number,
-    stoploss?: number
+    price: number,             // Price is in same format as mbp10.price - *1e9
+    stoploss?: number          // Number of ticks away from entry (eg 4)
 })
 
 // Place a market order
@@ -150,11 +147,6 @@ if (!state.userTrade) {
 }
 ```
 
-## Platform attributes
-**Only 1 trade can be opened at a time - you cannot place a bid limit while long**
-
-**Limit orders are filled when an opposing bid or ask becomes available at that price**
-
 ## Custom Indicators
 
 The `state.mbp10.attributes` object provides advanced market metrics:
@@ -165,3 +157,9 @@ The `state.mbp10.attributes` object provides advanced market metrics:
 - `bid_stack_rate/ask_stack_rate`: Rate of new orders
 
 Use these metrics to create more sophisticated trading strategies based on order book dynamics.
+
+
+## Platform Limitations
+**Only 1 trade can be opened at a time - you cannot place a bid limit while long**
+
+**Limit orders are filled when an opposing bid or ask becomes available at that price**
