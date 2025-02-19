@@ -36,7 +36,6 @@ See `instruments.ts` for available attributes.
       stoploss?: number
     } | null
 ```
-### State Object Market Data
 Market Data is in MBP10 format from Databento.
 Additionally it includes an attributes parameter containing custom indicators.
 Learn more about MBP10 at https://databento.com/docs/schemas-and-data-formats/mbp-10
@@ -66,7 +65,7 @@ Learn more about MBP10 at https://databento.com/docs/schemas-and-data-formats/mb
         bid_ct: number          // Bid count
         ask_ct: number          // Ask count
       }>    
-      attributes: {             // Custom Indicators
+      attributes: {             // Custom Indicators, more information below
         bid_density: number
         ask_density: number
         buy_density: number
@@ -151,25 +150,12 @@ if (!state.userTrade) {
 }
 ```
 
-## Best Practices
+## Platform attributes
+**Only 1 trade can be opened at a time - you cannot place a bid limit while long**
 
-1. **Always Check Current Position**
-   ```typescript
-   if (!state.userTrade) {
-       // Safe to enter new position
-   }
-   ```
+**Limit orders are filled when an opposing bid or ask becomes available at that price**
 
-2. **Use Stoploss for Risk Management**
-   ```typescript
-   placeLimitOrder({
-       type: "Bid",
-       price: price,
-       stoploss: 4  // Exit if price moves 4 ticks against you
-   })
-   ```
-
-## Market Attributes
+## Custom Indicators
 
 The `state.mbp10.attributes` object provides advanced market metrics:
 
