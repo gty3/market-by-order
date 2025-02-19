@@ -1,0 +1,30 @@
+# Market By Order Repository Guidelines
+
+## Performance Considerations
+
+### High-Frequency Execution
+- Code in this repository runs at extremely high frequency (every 500 microseconds)
+- Avoid multiple console.log statements or console.log statements without conditionals
+
+### Best Practices
+1. Minimize memory allocations and garbage collection
+2. Avoid complex object creation in the hot path
+3. Use primitive types where possible
+4. Keep calculations simple and efficient
+5. For debugging:
+   - Use state variables to track important changes
+   - Consider implementing a debug mode flag that only logs on significant state changes
+   - If needed, implement circular buffers or sampling to capture data at reduced frequency
+
+### Debugging Strategies
+Instead of using console.log, consider these alternatives:
+- Track state changes in store variables
+- Implement condition counters
+- Use sampling (e.g., only track every Nth execution)
+- Add debug flags that can be toggled for specific scenarios
+
+## Repository Structure
+- `density-momentum.ts`: Density-based momentum trading strategy
+- `types.d.ts`: Type definitions for the trading system
+- `default.ts`: Default configuration and settings
+- `instruments.ts`: Trading instrument specifications 

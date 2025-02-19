@@ -60,7 +60,16 @@ declare global {
         bid_ct: number
         ask_ct: number
       }>
-      attributes: {}
+      attributes: {
+        bid_density: number
+        ask_density: number
+        buy_density: number
+        sell_density: number
+        bid_pull_rate: number
+        ask_pull_rate: number
+        bid_stack_rate: number
+        ask_stack_rate: number
+      }
     }
   }
 }
