@@ -10,20 +10,21 @@ Your trading strategy will have access to the following global objects:
 - `store`: Persistent storage for variables across message runs
 - Trading functions: `placeLimitOrder` and `placeMarketOrder`
 
-### State Object Instrument and Orders
+### State Object
 
 The `state` object provides instrument and trade information as well as market data.
+See `instruments.ts` for available attributes.
 
 ```typescript
-    state.instrument: {
+    state.instrument: {         // Numbers represented in large numbers, divide by their respective multiplers
       symbol: string
-      commission: number
-      minPrice: number
-      increment: number
+      commission: number        // Trading fees in *1e4
+      minPrice: number          // Minimum price fluctuation in *1e4
+      increment: number         // Tick increment in *1e9
     }
     bidLimitOrder: {
-      price: number
-      stoploss?: number
+      price: number             // Price is represented n *1e9 as well
+      stoploss?: number         // Stoploss is represented in ticks
     } | null
     offerLimitOrder: {
       price: number

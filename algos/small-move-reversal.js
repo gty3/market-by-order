@@ -1,5 +1,12 @@
-// Density Momentum Trading Strategy
-// Tracks price movements and density changes to identify trading opportunities
+/**
+ * Small Move Reversal
+ * 
+ * This strategy is a simple reversal strategy that looks for a small price move
+ * and then reverses the position.
+ * 
+ * This strategy is effective in medium to high volume. 
+ * 
+ */
 
 class PriceMovementTracker {
   referencePrice = 0;
