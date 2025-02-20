@@ -167,4 +167,4 @@ Use these metrics to create more sophisticated trading strategies based on order
 
 **Stop orders and market orders do not incorporate slippage**
 
-**Code does not save on the frontend, save your code separately**
+**Code changes in the editor do not currently save, save your code separately**
