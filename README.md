@@ -164,3 +164,7 @@ Use these metrics to create more sophisticated trading strategies based on order
 **Only 1 trade can be opened at a time - you cannot place a bid limit while long**
 
 **Limit orders are filled when an opposing bid or ask becomes available at that price - eg your limit orders are only filled by opposing limit orders**
+
+**Stop orders and market orders do not incorporate slippage**
+
+**Code does not save on the frontend, save your code separately**
