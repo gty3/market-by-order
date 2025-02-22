@@ -1,48 +1,104 @@
+// @ts-check
+/// <reference path="../types.d.ts" />
+
 /**
  * Small Move Reversal
+ *
+ * This strategy places orders when:
+ * 1. Price moves down 3 ticks and bid density increases 10% (places Bid)
+ * 2. Price moves up 3 ticks and ask density increases 10% (places Ask)
  * 
- * This strategy takes advantage of short reversals in price direction.
- * 
- * This strategy is effective in medium to high volume.
- * This strategy is to be avoided in low volume or high volatility, it can get easily run over.
- * 
+ * Risk Management:
+ * - Stoploss: 4 ticks
+ * - Take Profit: 4 ticks (implemented via opposing limit order)
+ * - Cleanup: Cancel outstanding orders by placing same-side limit at same price
  */
 
 class PriceMovementTracker {
-  referencePrice = 0;
-  downwardTicks = 0;
-  tickSize;
+  priceHistory = []
+  bidDensityHistory = []
+  askDensityHistory = []
+  tickSize
+  timeWindowSeconds = 8
 
-  constructor(instrument) {
-    this.tickSize = instrument.increment;
+  constructor(instrument, timeWindowSeconds = 8) {
+    this.tickSize = instrument.increment
+    this.timeWindowSeconds = timeWindowSeconds
   }
 
-  update(currentPrice) {
-    // Initialize reference price if not set
-    if (this.referencePrice === 0) {
-      this.referencePrice = currentPrice;
-      return { downwardTicks: 0 };
+  update(currentPrice, currentBidDensity, currentAskDensity) {
+    const now = Date.now()
+    
+    // Clean up old entries first
+    this.cleanupOldEntries(now)
+
+    // If this is our first entry
+    if (this.priceHistory.length === 0) {
+      this.priceHistory.push({
+        timestamp: now,
+        price: currentPrice
+      })
+      this.bidDensityHistory.push({
+        timestamp: now,
+        density: currentBidDensity
+      })
+      this.askDensityHistory.push({
+        timestamp: now,
+        density: currentAskDensity
+      })
+      return {
+        ticksMoved: 0,
+        bidDensityChangePercent: 0,
+        askDensityChangePercent: 0
+      }
     }
 
-    // Calculate ticks moved
-    const ticksMoved = Math.round((currentPrice - this.referencePrice) / this.tickSize);
+    // Get reference points (oldest entries in our window)
+    const priceReference = this.priceHistory[0]
+    const bidDensityReference = this.bidDensityHistory[0]
+    const askDensityReference = this.askDensityHistory[0]
+    
+    // Calculate changes
+    const ticksMoved = (currentPrice - priceReference.price) / this.tickSize
+    
+    // Calculate density changes with protection against division by zero
+    const bidDensityChangePercent = bidDensityReference.density === 0 ? 0 : 
+      ((currentBidDensity - bidDensityReference.density) / bidDensityReference.density) * 100
+    const askDensityChangePercent = askDensityReference.density === 0 ? 0 : 
+      ((currentAskDensity - askDensityReference.density) / askDensityReference.density) * 100
 
-    // Update downward movement count
-    if (ticksMoved < 0) {
-      this.downwardTicks += Math.abs(ticksMoved);
-    } else if (currentPrice === this.referencePrice - this.tickSize) {
-      // Reset if price returns to one tick before the reference
-      this.downwardTicks = 0;
-    }
+    // Add new entries
+    this.priceHistory.push({
+      timestamp: now,
+      price: currentPrice
+    })
+    this.bidDensityHistory.push({
+      timestamp: now,
+      density: currentBidDensity
+    })
+    this.askDensityHistory.push({
+      timestamp: now,
+      density: currentAskDensity
+    })
 
     return {
-      downwardTicks: this.downwardTicks
-    };
+      ticksMoved,
+      bidDensityChangePercent,
+      askDensityChangePercent
+    }
+  }
+
+  cleanupOldEntries(currentTime) {
+    const cutoffTime = currentTime - (this.timeWindowSeconds * 1000)
+    this.priceHistory = this.priceHistory.filter(entry => entry.timestamp >= cutoffTime)
+    this.bidDensityHistory = this.bidDensityHistory.filter(entry => entry.timestamp >= cutoffTime)
+    this.askDensityHistory = this.askDensityHistory.filter(entry => entry.timestamp >= cutoffTime)
   }
 
   reset() {
-    this.referencePrice = 0;
-    this.downwardTicks = 0;
+    this.priceHistory = []
+    this.bidDensityHistory = []
+    this.askDensityHistory = []
   }
 }
 
@@ -57,142 +113,153 @@ if (!store.lastPrice) {
   store.bidDensityUpCount = 0
   store.referenceBidDensity = 0
   store.referenceBidPrice = 0
+  store.referenceAskDensity = 0  // Added for tracking ask density at order time
+  store.referenceAskPrice = 0    // Added for tracking ask price at order time
   store.totalPriceDropIncrements = 0
+  store.lastTicksMoved = null
   // Debug state tracking
-  store.lastSignificantEvent = ''
+  store.lastSignificantEvent = ""
   store.lastDensityChange = 0
   store.debugStats = {
     orderAttempts: 0,
-    densityThresholdMet: 0,
-    priceThresholdMet: 0
+    conditionsMet: 0
   }
-  // Initialize price tracker with instrument info
-  store.priceTracker = new PriceMovementTracker(state.instrument)
+  // Initialize price tracker with instrument info and 30 second window
+  store.priceTracker = new PriceMovementTracker(state.instrument, 8)
 }
 
+// console.log("store.priceTracker", store.priceTracker, state.instrument.increment)
 // Get current price and density from first level
 const currentAskPrice = state.mbp10.levels[0].ask_px
 const currentBidPrice = state.mbp10.levels[0].bid_px
 const currentAskDensity = state.mbp10.attributes.ask_density
 const currentBidDensity = state.mbp10.attributes.bid_density
 
+// Track price movements and density changes - moved outside condition blocks to run always
+const { ticksMoved, bidDensityChangePercent, askDensityChangePercent } = 
+  store.priceTracker.update(currentBidPrice, currentBidDensity, currentAskDensity)
+
+// Log changes when significant
+if (store.lastTicksMoved !== ticksMoved) {
+  console.log(
+    `Ticks Moved: ${ticksMoved}, Bid Density Change: ${bidDensityChangePercent.toFixed(2)}%, Ask Density Change: ${askDensityChangePercent.toFixed(2)}%`
+  )
+  store.lastTicksMoved = ticksMoved
+}
+
 // Check if we're not already in a position
 if (!state.userTrade && !state.offerLimitOrder && !state.bidLimitOrder) {
-  // Track price movements using our new tracker
-  const priceMovement = store.priceTracker.update(currentBidPrice)
-  
-  // Alert when price has moved down 3 ticks
-  if (priceMovement.downwardTicks >= 3) {
-    console.log(`Alert: Price has moved down ${priceMovement.downwardTicks} ticks`)
-    // You can add additional actions here, such as placing an order or logging
-  }
+  // Check conditions for downward movement (place Bid)
+  if (ticksMoved <= -3 && bidDensityChangePercent >= 8) {
+    store.debugStats.conditionsMet++
+    console.log(`Bid conditions met - Ticks: ${ticksMoved}, Initial Density Change: ${bidDensityChangePercent.toFixed(2)}%`)
 
-  // Start tracking if we haven't started yet
-  if (store.referenceBidDensity === 0) {
-    store.referenceBidDensity = currentBidDensity
-    store.lastSignificantEvent = 'Started tracking new reference point'
-  }
-
-  // Calculate density percentage change
-  const densityPercentageChange = store.referenceBidDensity > 0 
-    ? ((currentBidDensity - store.referenceBidDensity) / store.referenceBidDensity) * 100
-    : 0
-
-  // Track significant changes
-  if (Math.abs(densityPercentageChange - store.lastDensityChange) > 1) {
-    store.lastDensityChange = densityPercentageChange
-    store.lastSignificantEvent = `Density changed to ${densityPercentageChange.toFixed(2)}%, Price movement: ${priceMovement.downwardTicks} ticks down`
-  }
-
-  // Update debug stats
-  if (priceMovement.downwardTicks >= 3) store.debugStats.priceThresholdMet++
-  if (densityPercentageChange >= 10) store.debugStats.densityThresholdMet++
-
-  // Check conditions: price dropped by 3 increments and density increased by 10%
-  if (priceMovement.downwardTicks >= 3 && densityPercentageChange >= 10) {
-    store.debugStats.orderAttempts++
-    store.lastSignificantEvent = `Order placed: price drop=${priceMovement.downwardTicks} ticks, density change=${densityPercentageChange.toFixed(2)}%`
-    
-    // Place buy limit order at current bid
+    // Place buy limit order one tick away from current bid
+    const orderPrice = currentBidPrice - state.instrument.increment
     placeLimitOrder({
       type: "Bid",
-      price: currentBidPrice,
+      price: orderPrice,
       stoploss: 4
     })
     
-    // Reset tracking after order placed
-    store.referenceBidDensity = 0
-    store.priceTracker.reset()
+    // Store reference values for density tracking
+    store.referenceBidPrice = orderPrice
+    store.referenceBidDensity = currentBidDensity
+
+    store.debugStats.orderAttempts++
+  }
+  // Check conditions for upward movement (place Ask)
+  else if (ticksMoved >= 3 && askDensityChangePercent >= 8) {
+    store.debugStats.conditionsMet++
+    console.log(`Ask conditions met - Ticks: ${ticksMoved}, Initial Density Change: ${askDensityChangePercent.toFixed(2)}%`)
+
+    // Place sell limit order one tick away from current ask
+    const orderPrice = currentAskPrice + state.instrument.increment
+    placeLimitOrder({
+      type: "Ask",
+      price: orderPrice,
+      stoploss: 4
+    })
+
+    // Store reference values for density tracking
+    store.referenceAskPrice = orderPrice
+    store.referenceAskDensity = currentAskDensity
+
+    store.debugStats.orderAttempts++
   }
 
-  // Reset tracking if density drops significantly or price moves up
-  if (densityPercentageChange < -5 || priceMovement.downwardTicks > 0) {
-    store.lastSignificantEvent = `Reset tracking: density=${densityPercentageChange.toFixed(2)}%, downward ticks=${priceMovement.downwardTicks}`
-    store.referenceBidDensity = 0
+  // Reset tracking if price reverses from current direction
+  if ((ticksMoved > 0 && bidDensityChangePercent >= 5) || 
+      (ticksMoved < 0 && askDensityChangePercent >= 5)) {
     store.priceTracker.reset()
   }
+} else if (state.userTrade && !state.offerLimitOrder && !state.bidLimitOrder) {
+  // Place take profit order when we have a position but no opposing limit order
+  if (state.userTrade.side === "Bid") {
+    // We're long, place take profit Ask order 4 ticks above entry
+    const takeProfitPrice = state.userTrade.price + (state.instrument.increment * 4)
+    placeLimitOrder({
+      type: "Ask",
+      price: takeProfitPrice,
+      stoploss: 4
+    })
+  } else if (state.userTrade.side === "Ask") {
+    // We're short, place take profit Bid order 4 ticks below entry
+    const takeProfitPrice = state.userTrade.price - (state.instrument.increment * 4)
+    placeLimitOrder({
+      type: "Bid",
+      price: takeProfitPrice,
+      stoploss: 4
+    })
+  }
+} else {
+  // Handle outstanding limit orders - check for density decreases
+  if (state.bidLimitOrder) {
+    const bidDensityChangePercent = store.referenceBidDensity === 0 ? 0 :
+      ((currentBidDensity - store.referenceBidDensity) / store.referenceBidDensity) * 100
 
-  // Check for price movement and density increase
-  if (store.lastPrice > 0) { // Make sure we have a previous price
-    // Check ask side conditions (price down + ask density up)
-    const priceMovedDown = currentAskPrice < store.lastPrice
-    const askDensityIncreased = currentAskDensity > store.lastAskDensity
-
-    if (priceMovedDown && askDensityIncreased) {
-      store.priceDownCount++
-      store.askDensityUpCount++
-    } else {
-      // Reset ask side counters if conditions not met
-      store.priceDownCount = 0
-      store.askDensityUpCount = 0
+    // Log density changes for active bid orders
+    if (store.referenceBidDensity !== 0) {
+      console.log(`Active Bid order - Price Movement: ${ticksMoved} ticks, Current Density Change: ${bidDensityChangePercent.toFixed(2)}%`)
     }
 
-    // Check bid side conditions (price up + bid density up)
-    const priceMovedUp = currentBidPrice > store.lastPrice
-    const bidDensityIncreased = currentBidDensity > store.lastBidDensity
-
-    if (priceMovedUp && bidDensityIncreased) {
-      store.priceUpCount++
-      store.bidDensityUpCount++
-    } else {
-      // Reset bid side counters if conditions not met
-      store.priceUpCount = 0
-      store.bidDensityUpCount = 0
-    }
-
-    // Check if we should place an ask limit order
-    if (store.priceDownCount >= 1 && store.askDensityUpCount >= 1) {
-      // Place sell limit order at next price level
-      const nextAskPrice = currentAskPrice + state.instrument.increment
-      placeLimitOrder({
-        type: "Ask",
-        price: nextAskPrice,
-        stoploss: 4 // Add stoploss for risk management
-      })
-      
-      // Reset ask side counters after placing order
-      store.priceDownCount = 0
-      store.askDensityUpCount = 0
-    }
-
-    // Check if we should place a bid limit order
-    if (store.priceUpCount >= 1 && store.bidDensityUpCount >= 1) {
-      // Place buy limit order at next price level
-      const nextBidPrice = currentBidPrice - state.instrument.increment
+    if (bidDensityChangePercent <= -15) {
+      console.log(`Cancelling Bid order - Price Movement: ${ticksMoved} ticks, Density decreased by ${Math.abs(bidDensityChangePercent).toFixed(2)}%`)
+      // Cancel by placing same-side limit at same price
       placeLimitOrder({
         type: "Bid",
-        price: nextBidPrice,
-        stoploss: 4 // Add stoploss for risk management
+        price: store.referenceBidPrice,
+        stoploss: 4
       })
-      
-      // Reset bid side counters after placing order
-      store.priceUpCount = 0
-      store.bidDensityUpCount = 0
+      store.referenceBidDensity = 0
+      store.referenceBidPrice = 0
+    }
+  }
+
+  if (state.offerLimitOrder) {
+    const askDensityChangePercent = store.referenceAskDensity === 0 ? 0 :
+      ((currentAskDensity - store.referenceAskDensity) / store.referenceAskDensity) * 100
+
+    // Log density changes for active ask orders
+    if (store.referenceAskDensity !== 0) {
+      console.log(`Active Ask order - Price Movement: ${ticksMoved} ticks, Current Density Change: ${askDensityChangePercent.toFixed(2)}%`)
+    }
+
+    if (askDensityChangePercent <= -15) {
+      console.log(`Cancelling Ask order - Price Movement: ${ticksMoved} ticks, Density decreased by ${Math.abs(askDensityChangePercent).toFixed(2)}%`)
+      // Cancel by placing same-side limit at same price
+      placeLimitOrder({
+        type: "Ask",
+        price: store.referenceAskPrice,
+        stoploss: 4
+      })
+      store.referenceAskDensity = 0
+      store.referenceAskPrice = 0
     }
   }
 }
 
 // Update our stored values for next comparison
-store.lastPrice = currentBidPrice // Use bid price as reference
+store.lastPrice = currentBidPrice
 store.lastAskDensity = currentAskDensity
-store.lastBidDensity = currentBidDensity 
+store.lastBidDensity = currentBidDensity

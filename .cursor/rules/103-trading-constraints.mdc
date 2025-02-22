@@ -1,0 +1,69 @@
+---
+description: ENFORCE trading constraints when implementing algorithms to ensure proper trade management
+globs: src/**/*.{js,ts,jsx,tsx}
+tags: [trading, algorithms, constraints]
+version: 1.1.0
+---
+
+# Trading Algorithm Constraints
+
+## Context
+- This repository contains day trading algorithms implemented in JavaScript
+- All trading algorithms must follow strict position management rules
+- Rules ensure proper risk management and prevent overlapping positions
+
+## Requirements
+- Only one trading position can be open at any given time
+- All trades must be closed by the end of the trading session
+- Position entry and exit must be clearly defined and tracked
+- Trade management must include proper position sizing and risk controls
+- All algorithms must maintain a clear state of current positions using state.userTrade
+
+## Examples
+<example>
+```javascript
+// Good: Proper position management using state tracking
+if (!state.userTrade && !state.offerLimitOrder && !state.bidLimitOrder) {
+  // Only place new orders when no position exists
+  placeLimitOrder({
+    type: "Bid",
+    price: state.mbp10.levels[1].bid_px,
+    stoploss: 4
+  })
+} else if (state.userTrade) {
+  // Handle existing position
+  if (state.userTrade.side === "Bid") {
+    // We're long, place exit order
+    placeLimitOrder({
+      type: "Ask",
+      price: state.mbp10.levels[2].ask_px,
+      stoploss: 4
+    })
+  }
+}
+```
+This algorithm properly checks position state before entering new trades and manages exits.
+</example>
+
+<example type="invalid">
+```javascript
+// Bad: No position tracking or trade management
+if (state.mbp10.levels[0].bid_px < somePrice) {
+  placeLimitOrder({
+    type: "Bid",
+    price: state.mbp10.levels[0].bid_px
+  })
+}
+// ❌ No check for existing positions
+// ❌ No exit management
+// ❌ No stoploss protection
+```
+This algorithm violates position management rules by not tracking state or ensuring proper exits.
+</example>
+
+<critical>
+- NEVER allow multiple positions to be open simultaneously
+- ALWAYS check state.userTrade before entering new positions
+- ALWAYS include stoploss protection in limit orders
+- ALWAYS ensure trades have defined exit conditions
+</critical> 

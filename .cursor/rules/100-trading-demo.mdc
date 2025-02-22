@@ -1,0 +1,64 @@
+---
+description: PROVIDE context and guidelines when working with the trading demo interface to ensure consistent implementation
+globs: nextjs/components/dom/**/*.{ts,tsx}
+tags: [trading, dom, demo, editor]
+priority: 2
+version: 1.0.0
+---
+
+# Trading Demo Interface Guidelines
+
+## Context
+- Trading demo interface with DOM (Depth of Market) display
+- Interactive code editor for custom trading strategies
+- Includes market data visualization and order placement functionality
+
+## Requirements
+
+### Core Components
+- DOM display must show price rows with bid/ask volumes
+- Account value and PNL tracking must be maintained
+- Market and limit order functionality must be preserved
+- Editor must support JavaScript/TypeScript code execution
+- WebSocket connection must handle market data updates
+
+### Trading Interface
+- Support both market and limit orders
+- Maintain proper order state management
+- Track user positions and PNL
+- Handle order density indicators
+- Support volume profile visualization
+
+### Code Editor Integration
+- Monaco editor for strategy implementation
+- Support real-time code execution
+- Proper error handling and display
+- Access to trading functions:
+  - placeLimitOrder({type: "Bid"|"Ask", price: number, stoploss?: number})
+  - placeMarketOrder("Buy"|"Sell")
+
+## Examples
+
+<example>
+// Valid trading strategy implementation
+if (state.prices[5] < 1000) {
+  placeLimitOrder({
+    type: "Bid",
+    price: parseFloat(state.prices[5]),
+    stoploss: parseFloat(state.prices[7])
+  });
+}
+</example>
+
+<example type="invalid">
+// Invalid: Direct DOM manipulation
+document.querySelector('.price-row').click();
+// Invalid: Async code without proper state handling
+setTimeout(() => placeMarketOrder("Buy"), 1000);
+</example>
+
+<critical>
+- NEVER allow direct DOM manipulation in trading strategies
+- ALWAYS validate prices before order placement
+- ENSURE proper error handling for code execution
+</critical>

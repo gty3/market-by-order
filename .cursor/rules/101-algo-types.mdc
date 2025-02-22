@@ -1,0 +1,63 @@
+---
+description: ENFORCE type checking in algo files by referencing types.d.ts
+globs: algos/**/*.js
+tags: [typescript, algorithms, type-checking]
+version: 1.2.0
+---
+
+# Algorithm Type Checking Rule
+
+## Context
+- Applies to all JavaScript algorithm files in the algos directory
+- Ensures proper type checking using TypeScript definitions
+- Maintains JavaScript as the implementation language
+- Enforces correct handling of numeric values and their representations
+
+## Requirements
+- Each algorithm file must include a TypeScript reference directive
+- The reference must point to the root types.d.ts file
+- Files must remain as JavaScript (.js extension)
+- Type checking should be enabled through JSDoc comments
+- Must handle numeric values according to their scale and type:
+  - Prices are represented in *1e9 (whole numbers)
+  - Commission in *1e4 (whole numbers)
+  - Stoploss in ticks (whole numbers)
+  - Tick movements (whole numbers)
+  - Density values (decimals, display with 2 decimal places)
+  - Density percentage changes (decimals, display with 2 decimal places)
+
+## Examples
+<example>
+// @ts-check
+/// <reference path="../types.d.ts" />
+
+// Correct: Proper handling of numeric types
+const ticksMoved = (currentPrice - referencePrice) / tickSize  // Whole number
+console.log(`Ticks: ${ticksMoved}, Density: ${densityValue.toFixed(2)}`)
+
+// Proper price handling in orders
+placeLimitOrder({
+  type: "Bid",
+  price: state.mbp10.levels[0].bid_px - state.instrument.increment,  // Whole number
+  stoploss: 4  // Whole number in ticks
+})
+</example>
+
+<example type="invalid">
+// Wrong: Improper numeric handling
+const ticksMoved = price / increment  // Missing proper scaling
+console.log(`Ticks: ${ticksMoved.toFixed(2)}`)  // Wrong: ticks are whole numbers
+
+placeLimitOrder({
+  type: "Bid",
+  price: 100.5,  // Wrong: Not using proper price scale
+  stoploss: 0.5  // Wrong: Stoploss must be whole ticks
+})
+</example>
+
+<critical>
+- ALWAYS use proper numeric scaling (*1e9 for prices, *1e4 for commission)
+- NEVER format whole number values with decimals (ticks, stoploss)
+- ALWAYS format density values with 2 decimal places
+- ENSURE all calculations maintain proper numeric scale
+</critical> 

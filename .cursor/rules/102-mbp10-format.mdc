@@ -1,0 +1,92 @@
+---
+description: USE when processing MBP-10 market data format to ensure correct field interpretation
+globs: **/*.{ts,js,py,cpp,rs}
+tags: [market-data, trading, mbp10]
+version: 1.1.0
+---
+
+# MBP-10 Market Data Format
+
+## Context
+- When working with MBP-10 (Market By Price) data format
+- When processing or analyzing market depth data
+- When implementing trading systems using MBP-10 data
+
+## Requirements
+- All MBP-10 records must contain the following fields:
+  - hd (Header): Contains metadata about the message
+    - length: Record length
+    - rtype: Record type identifier
+    - publisher_id: Publisher identifier
+    - instrument_id: Instrument identifier
+    - ts_event: Timestamp of event
+  - price: Price value
+  - size: Quantity
+  - action: Update action type ("Add", "Cancel", "Modify", "cleaR", "Trade", "Fill")
+  - side: Order side ("Ask", "Bid", "None")
+  - flags: Message flags
+  - depth: Market depth level
+  - ts_recv: Receive timestamp
+  - ts_in_delta: Time delta
+  - sequence: Sequence number
+  - levels: Array of price levels, each containing:
+    - bid_px: Bid price
+    - ask_px: Ask price
+    - bid_sz: Bid size
+    - ask_sz: Ask size
+    - bid_ct: Bid count
+    - ask_ct: Ask count
+  - attributes: Extended attributes
+    - ask_density: Optional density metric for asks
+    - bid_density: Optional density metric for bids
+    - buy_density: Optional density metric for buys
+    - sell_density: Optional density metric for sells
+    - is_new_price: Optional boolean for new price levels
+    - bid_pull_rate: Optional metric for bid cancellations
+    - ask_pull_rate: Optional metric for ask cancellations
+    - bid_stack_rate: Optional metric for bid additions
+    - ask_stack_rate: Optional metric for ask additions
+
+## Examples
+
+<example>
+// Valid MBP-10 record structure
+const mbp10Record = {
+  hd: {
+    length: 100,
+    rtype: 1,
+    publisher_id: 123,
+    instrument_id: 456,
+    ts_event: 1645113600000
+  },
+  price: 444500,
+  size: 100,
+  action: "Add",
+  side: "Bid",
+  flags: 0,
+  depth: 10,
+  ts_recv: 1645113600001,
+  ts_in_delta: 1,
+  sequence: 1000,
+  levels: [{
+    bid_px: 444500,
+    ask_px: 444600,
+    bid_sz: 100,
+    ask_sz: 150,
+    bid_ct: 1,
+    ask_ct: 2
+  }],
+  attributes: {
+    bid_density: 0.5,
+    ask_density: 0.6,
+    is_new_price: true
+  }
+}
+</example>
+
+## Notes
+- All timestamps are in milliseconds since epoch
+- The levels array contains the current state of the order book
+- Extended attributes are optional and may be null
+- Action types indicate the type of order book update
+- Side can be "Ask", "Bid", or "None" for certain events 
