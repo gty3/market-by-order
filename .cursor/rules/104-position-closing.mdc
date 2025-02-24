@@ -1,10 +1,3 @@
----
-description: ENFORCE correct position closing mechanics in trading algorithms to ensure proper trade exits
-globs: algos/**/*.{js,ts}
-tags: [trading, position-management, exits]
-version: 1.3.0
----
-
 # Position Closing Mechanics
 
 ## Context
@@ -12,21 +5,23 @@ version: 1.3.0
 - No direct "target" or "take-profit" parameters exist in order placement
 - Applies to all trading algorithms implementing exit logic
 - Outstanding limit orders must be cancelled using same-side limit orders at the same price
+- Stop loss orders will automatically close both the position and any outstanding limit orders
 
 ## Requirements
 - Positions can ONLY be closed through:
   1. Placing an opposing limit order (Ask to close Bid, Bid to close Ask)
   2. Placing an opposing market order (Sell to close Buy, Buy to close Sell)
+  3. Stop loss trigger (automatically closes position and cancels outstanding limit orders)
 - Exit prices must be explicitly calculated and specified
-- Take profit and stop loss levels must be implemented via separate opposing orders
-- Each algorithm must handle its own position closing logic
+- Take profit levels must be implemented via separate opposing orders
+- Stop loss will automatically handle position closure and limit order cancellation
+- Each algorithm must handle its own position closing logic (except for stop loss automation)
 - MUST cancel outstanding limit orders by placing same-side limit orders at the same price (Ask to cancel Ask, Bid to cancel Bid)
-- NEVER use market orders or opposing limit orders to cancel limit orders
 
 ## Examples
 
 <example>
-// Correct: Implementing take profit with proper cleanup
+// Correct: Implementing take profit with proper cleanup and stop loss
 if (state.userTrade && !state.offerLimitOrder) {
   if (state.userTrade.side === "Bid") {
     // Close long position with sell limit order
@@ -34,7 +29,7 @@ if (state.userTrade && !state.offerLimitOrder) {
     placeLimitOrder({
       type: "Ask",
       price: exitPrice,
-      stoploss: 4
+      stoploss: state.userTrade.price - (state.instrument.increment * 2) // Stop loss will auto-close position
     })
   }
 } else if (!state.userTrade && state.offerLimitOrder) {
@@ -69,4 +64,5 @@ placeMarketOrder({
 - ENSURE proper tracking of position state before placing exit orders
 - ALWAYS cancel limit orders with same-side limits at the same price
 - NEVER use market orders or opposing limits to cancel limit orders
+- REMEMBER stop loss will automatically close positions and cancel outstanding limit orders
 </critical> 

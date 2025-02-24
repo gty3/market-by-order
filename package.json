@@ -1,0 +1,23 @@
+{
+  "name": "market-by-order",
+  "version": "1.0.0",
+  "description": "Trading algorithms for market-by-order data",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "convert": "node scripts/convert-to-js.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "esbuild algos/small-move-reversal.ts --bundle --outfile=dist/small-move-reversal-combined.js --format=iife"
+  },
+  "keywords": [
+    "trading",
+    "algorithms",
+    "market-data"
+  ],
+  "author": "gty3",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.0.0"
+  }
+}

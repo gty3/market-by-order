@@ -2,7 +2,6 @@
 description: PROVIDE context and guidelines when working with the trading demo interface to ensure consistent implementation
 globs: nextjs/components/dom/**/*.{ts,tsx}
 tags: [trading, dom, demo, editor]
-priority: 2
 version: 1.0.0
 ---
 

@@ -6,7 +6,7 @@ globs: .cursor/rules/*.mdc
 ---
 description: Use ALWAYS when asked to CREATE A RULE or UPDATE A RULE or taught a lesson from the user that should be retained as a new rule for Cursor
 date: 2025-02-17
-version: 3.1.0
+version: 1.1.0
 ---
 ## Core Structure
 

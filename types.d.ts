@@ -1,5 +1,104 @@
-declare global {
+/**
+ * Type definitions for the market-by-order trading platform
+ */
 
+/**
+ * Market data level information
+ */
+
+export interface Instrument {
+  symbol: string
+  commission: number
+  minPrice: number
+  increment: number
+}
+interface Level {
+  ask_px: number;
+  ask_qty: number;
+  bid_px: number;
+  bid_qty: number;
+}
+
+/**
+ * Market data attributes
+ */
+interface MBP10Attributes {
+  ask_density: number;
+  bid_density: number;
+  spread: number;
+  mid_price: number;
+}
+
+/**
+ * Market-by-price data structure
+ */
+interface MBP10 {
+  levels: Level[];
+  attributes: MBP10Attributes;
+}
+
+/**
+ * Trade information
+ */
+interface Trade {
+  side: "Bid" | "Ask";
+  price: number;
+  qty: number;
+  timestamp: number;
+}
+
+/**
+ * Limit order information
+ */
+interface LimitOrder {
+  side: "Bid" | "Ask";
+  price: number;
+  qty: number;
+  timestamp: number;
+  stoploss?: number;
+}
+
+/**
+ * Global state object
+ */
+interface State {
+  mbp10: MBP10;
+  instrument: Instrument;
+  userTrade: Trade | null;
+  bidLimitOrder: LimitOrder | null;
+  offerLimitOrder: LimitOrder | null;
+}
+
+/**
+ * Global store object for persisting algorithm state
+ */
+interface Store {
+  [key: string]: any;
+}
+
+/**
+ * Limit order parameters
+ */
+interface LimitOrderParams {
+  type: "Bid" | "Ask";
+  price: number;
+  stoploss?: number;
+}
+
+/**
+ * Market order parameters
+ */
+type MarketOrderParams = "Buy" | "Sell";
+
+/**
+ * Global variables and functions
+ */
+declare const state: State;
+declare const store: Store;
+declare function placeLimitOrder(params: LimitOrderParams): void;
+declare function placeMarketOrder(params: MarketOrderParams): void;
+
+declare global {
   var placeLimitOrder: (params: {
     type: "Bid" | "Ask"
     price: number
