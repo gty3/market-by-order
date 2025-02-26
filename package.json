@@ -5,9 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "convert": "node scripts/convert-to-js.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "bundle": "esbuild algos/small-move-reversal.ts --bundle --outfile=dist/small-move-reversal-combined.js --format=iife"
+    "bundle": "esbuild algos/${npm_config_algo:-small-move-reversal}.ts --bundle --outfile=dist/${npm_config_algo:-small-move-reversal}-combined.js --format=iife"
   },
   "keywords": [
     "trading",

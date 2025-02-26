@@ -1,67 +1,3 @@
-# Market-by-Order Trading Algorithms
-
-This repository contains trading algorithms designed to work with market-by-order data in a web-based trading platform.
-
-## Project Structure
-
-```
-market-by-order/
-├── algos/                      # Trading algorithms
-│   ├── small-move-reversal.ts  # Small move reversal strategy
-│   └── ...                     # Other trading strategies
-├── lib/                        # Reusable components and utilities
-│   ├── trackers/               # Price and market data tracking components
-│   ├── indicators/             # Technical indicators
-│   ├── risk-management/        # Risk management components
-│   └── utils/                  # Utility functions
-├── types.d.ts                  # Type definitions for the entire project
-├── scripts/                    # Build and conversion scripts
-├── dist/                       # Output directory for converted JS files
-└── tests/                      # Tests for components and algorithms
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or later)
-- npm or yarn
-
-### Installation
-
-```bash
-# Install dependencies
-npm install
-```
-
-### Development
-
-1. Create or modify algorithms in the `algos/` directory
-2. Create reusable components in the `lib/` directory
-3. Build TypeScript files:
-
-```bash
-npm run build
-```
-
-4. Convert TypeScript to JavaScript for use in the web platform:
-
-```bash
-npm run convert
-```
-
-5. The JavaScript files will be available in the `dist/` directory, ready to be copied into the web platform's code editor.
-
-## Usage in Web Platform
-
-1. Copy the JavaScript code from the `dist/` directory
-2. Paste it into the web platform's code editor
-3. The algorithms will have access to the following global objects:
-   - `state`: Contains market data and current positions
-   - `store`: Persistent storage for algorithm state
-   - `placeLimitOrder()`: Function to place limit orders
-   - `placeMarketOrder()`: Function to place market orders
-   
 # Market By Order Trading Strategy Development
 
 This repository contains tools and types for developing trading strategies that run within the DOM trading interface. The code here executes on every market data message, allowing you to create responsive trading algorithms.
@@ -70,6 +6,25 @@ Your trading strategy will have access to the following global objects:
 - `state`: Contains current market data and order state
 - `placeLimitOrder` and `placeMarketOrder`: Trading functions
 - `store`: Persistent storage for variables across message runs
+
+
+### Development
+
+1. Create or modify algorithms in the `algos/` directory
+2. Create reusable components in the `lib/` directory
+3. Bundle your algorithm into a single JavaScript file:
+
+```bash
+npm install
+# Bundle the default algorithm (small-move-reversal)
+npm run bundle
+
+# Bundle a specific algorithm
+npm run bundle --algo=persistent-spread
+```
+
+4. Copy the JavaScript code from the `dist/` directory (e.g., `dist/persistent-spread-combined.js`)
+5. Paste it into the web platform's code editor
 
 
 ## State Object
