@@ -61,23 +61,7 @@ npm run convert
    - `store`: Persistent storage for algorithm state
    - `placeLimitOrder()`: Function to place limit orders
    - `placeMarketOrder()`: Function to place market orders
-
-## Creating New Algorithms
-
-1. Create a new file in the `algos/` directory
-2. Import any needed components from the `lib/` directory
-3. Implement your trading logic
-4. Convert to JavaScript using the conversion script
-5. Test in the web platform
-
-## Best Practices
-
-1. Keep algorithms focused on trading logic
-2. Extract reusable components to the `lib/` directory
-3. Use proper type annotations for better code quality
-4. Follow the risk management guidelines
-5. Test thoroughly before deploying
-
+   
 # Market By Order Trading Strategy Development
 
 This repository contains tools and types for developing trading strategies that run within the DOM trading interface. The code here executes on every market data message, allowing you to create responsive trading algorithms.
