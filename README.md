@@ -33,7 +33,7 @@ The `state` object provides instrument and trade information as well as market d
 See `instruments.ts` for available attributes.
 
 ```typescript
-    state.instrument: {         // Numbers represented in large numbers, divide by their respective multiplers
+    state.instrument: {         // Numbers represented in large numbers, divide by their respective multipliers
       symbol: string
       commission: number        // Trading fees in *1e4
       minPrice: number          // Minimum price fluctuation in *1e4
